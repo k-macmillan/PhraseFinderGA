@@ -17,6 +17,7 @@ struct progeny
     int fitness = 0;
 };
 
+vector<progeny> Breed(const vector<progeny> &v, int cutoff, int pool_size, int phr_size);
 void Mutate(vector<progeny> &v, int mutation);
 int CorrectOrder(string a, string b);
 int CorrectLetters(string a, string b);
@@ -83,14 +84,7 @@ int main(int argc, char** argv)
 
         pool.clear();
         // Breed
-        for (int i = 0; i < pool_size; ++i)
-        {
-            string first_progenitor = new_generation[rand() % cutoff].s;
-
-            // Wanted to make this not equal to the first parent but can't because infinite loops with small pools/saved_population sizes
-            string second_progenitor = new_generation[rand() % cutoff].s;
-            pool.emplace_back(progeny(first_progenitor.substr(0,phr_size/2) + second_progenitor.substr(phr_size/2)));
-        }
+        pool = Breed(new_generation, cutoff, pool_size, phr_size);
 
         // Mutate
         Mutate(pool,mutation);
@@ -99,6 +93,21 @@ int main(int argc, char** argv)
     }
 
     return 0;
+}
+
+// Function to select whom to breed with
+vector<progeny> Breed(const vector<progeny> &v, int cutoff, int pool_size, int phr_size)
+{
+    vector<progeny> pool(pool_size);
+    for (int i = 0; i < pool_size; ++i)
+    {
+        string first_progenitor = v[rand() % cutoff].s;
+
+        // Wanted to make this not equal to the first parent but can't because infinite loops with small pools/saved_population sizes
+        string second_progenitor = v[rand() % cutoff].s;
+        pool[i] = progeny(first_progenitor.substr(0,phr_size/2) + second_progenitor.substr(phr_size/2));
+    }
+    return pool;
 }
 
 // Each character has "mutation" chance to be mutated
