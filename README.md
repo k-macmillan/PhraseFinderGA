@@ -3,9 +3,9 @@
 Simple Genetic Algorithm to find phrases.
 
 Users are able to specify:
-1. Pool size
-2. Mutation rate (0-100)
-3. Percentage of population to keep (0-100)
+1. Pool size (advised under 1000)
+2. Mutation rate (0-100, advised 1-5)
+3. Percentage of population to keep (0-100, advised < 15)
 
 Each generation the best candidate is printed as well as the fitness value which generation it currently is. After finding a match the program exits.
 
