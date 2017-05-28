@@ -3,6 +3,7 @@
 #include <vector>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>
+#include <algorithm>
 
 #define GET_RAND rand() % 95 + 32   // 32 - 126
 
@@ -10,12 +11,17 @@ using namespace std;
 
 struct progeny
 {
+    progeny(){}
+    progeny(string word_string) : s(word_string) {}
     string s;
     int fitness = 0;
 };
 
 void Mutate(vector<progeny> &v, int mutation);
 int CorrectOrder(string a, string b);
+int CorrectLetters(string a, string b);
+void EvaluateFitness(progeny &p, string b);
+bool FitnessSort(const progeny &lhs, const progeny &rhs){return lhs.fitness > rhs.fitness;};
 
 int main(int argc, char** argv)
 {
@@ -27,7 +33,7 @@ int main(int argc, char** argv)
 
     srand(time(NULL));
 
-    string words = "";
+    string words;
     for (int i = 1; i < argc; ++i)
         words += string(argv[i]) + " ";
     
@@ -35,52 +41,66 @@ int main(int argc, char** argv)
 
     unsigned int phr_size = words.size();
 
-    int pool_size, mutation;
-    cout << "Enter desired pool size: ";
+    int pool_size, mutation, saved_population;
+    cout << "Enter desired pool size(ex: 100): ";
     cin >> pool_size;
 
     cout << "\nEnter desired mutation rate in integer percentages(ex: 5): ";
     cin >> mutation;
 
+    cout << "\nEnter desired percentage of population to keep each generation(ex: 5): ";
+    cin >> saved_population;
+
     // Build initial pool
-    vector<string> pool(pool_size);
+    vector<progeny> pool(pool_size);
     for (int i = 0; i < pool_size; ++i)
     {
         string random_str;
         for (unsigned int j = 0; j < words.size(); ++j)
             random_str += GET_RAND;
-        pool[i] = random_str;
+        pool[i].s = random_str;
     }
 
-
-    // while (true)
+    vector<progeny> new_generation;
+    int cutoff = max(1.0,pool_size * saved_population / 100.0);
+    unsigned int generations = 0;
+    while (true)
     {
-        vector<progeny> new_generation(pool_size);
+        ++generations;
+         // Evaluate
+        for (int i = 0; i < pool_size; ++i)
+            EvaluateFitness(pool[i], words);
+
+        // Order by fitness
+        sort(pool.begin(), pool.end(), FitnessSort);
+        cout << "best: " << pool[0].s << "\nfitness: " << pool[0].fitness << "\tgeneration: " << generations << endl;
+        if (pool[0].fitness == int(words.size()*words.size() + CorrectLetters(words,words)))
+            return 0;
+
+        for (int i = 0; i < cutoff; ++i)
+            new_generation.emplace_back(pool[i]);
+
+        pool.clear();
         // Breed
         for (int i = 0; i < pool_size; ++i)
         {
-            string first_progenitor = pool[rand() % pool_size];
-            string second_progenitor;
-            do 
-            {
-                second_progenitor = pool[rand() % pool_size];
-            }while (first_progenitor == second_progenitor);
-            new_generation[i].s = first_progenitor.substr(0,phr_size/2) + second_progenitor.substr(phr_size/2);
-        }
-        // Mutate
-        Mutate(new_generation,mutation);
+            string first_progenitor = new_generation[rand() % cutoff].s;
 
-        // Evaluate
-        for (int i = 0; i < pool_size; ++i)
-        {
-            int worth = CorrectOrder(new_generation[i].s,words);
-            new_generation[i].fitness = worth * worth;
+            // Wanted to make this not equal to the first parent but can't because infinite loops with small pools/saved_population sizes
+            string second_progenitor = new_generation[rand() % cutoff].s;
+            pool.emplace_back(progeny(first_progenitor.substr(0,phr_size/2) + second_progenitor.substr(phr_size/2)));
         }
+
+        // Mutate
+        Mutate(pool,mutation);
+
+        new_generation.clear();
     }
 
     return 0;
 }
 
+// Each character has "mutation" chance to be mutated
 void Mutate(vector<progeny> &v, int mutation)
 {
     for (unsigned int i = 0; i < v.size(); ++i)
@@ -89,12 +109,31 @@ void Mutate(vector<progeny> &v, int mutation)
                 v[i].s[j] = GET_RAND; // small chance the mutation is the same value, deciding to ignore      
 }
 
+// Helper for the fitness evaluation
 int CorrectOrder(string a, string b)
 {
     int ret_val = 0;
     for (unsigned int i = 0; i < a.size(); ++i)
         if (a[i] == b[i])
             ++ret_val;
+
     return ret_val;
 }
 
+int CorrectLetters(string a, string b)
+{
+    int ret_val = 0;
+    for (unsigned int i = 0; i < a.size(); ++i)
+        for(unsigned int j = 0; j < b.size(); ++j)
+            if (a[i] == b[j])
+                ++ret_val;
+
+    return ret_val;
+}
+
+void EvaluateFitness(progeny &p, string b)
+{
+    p.fitness = CorrectOrder(p.s, b);
+    p.fitness *= p.fitness;
+    p.fitness += CorrectLetters(p.s, b);
+}
