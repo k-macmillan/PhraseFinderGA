@@ -109,7 +109,7 @@ void Mutate(vector<progeny> &v, int mutation)
                 v[i].s[j] = GET_RAND; // small chance the mutation is the same value, deciding to ignore      
 }
 
-// Helper for the fitness evaluation
+// Helper for the fitness evaluation. Finds count of letters in the correct order.
 int CorrectOrder(string a, string b)
 {
     int ret_val = 0;
@@ -120,6 +120,7 @@ int CorrectOrder(string a, string b)
     return ret_val;
 }
 
+// Helper for fitness evaluation. Finds number of correct letters, counts repeats.
 int CorrectLetters(string a, string b)
 {
     int ret_val = 0;
@@ -131,6 +132,7 @@ int CorrectLetters(string a, string b)
     return ret_val;
 }
 
+// Evaluates the fitness of a progeny
 void EvaluateFitness(progeny &p, string b)
 {
     p.fitness = CorrectOrder(p.s, b);
