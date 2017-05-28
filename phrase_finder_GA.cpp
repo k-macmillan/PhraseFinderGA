@@ -63,6 +63,7 @@ int main(int argc, char** argv)
 
     vector<progeny> new_generation;
     int cutoff = max(1.0,pool_size * saved_population / 100.0);
+    int match = words.size()*words.size() + CorrectLetters(words,words);
     unsigned int generations = 0;
     while (true)
     {
@@ -73,8 +74,8 @@ int main(int argc, char** argv)
 
         // Order by fitness
         sort(pool.begin(), pool.end(), FitnessSort);
-        cout << "best: " << pool[0].s << "\nfitness: " << pool[0].fitness << "\tgeneration: " << generations << endl;
-        if (pool[0].fitness == int(words.size()*words.size() + CorrectLetters(words,words)))
+        cout << "best: " << pool[0].s << "\nfitness: " << 100.0 * pool[0].fitness / match  << "%\tgeneration: " << generations << endl << endl;
+        if (pool[0].fitness == match)
             return 0;
 
         for (int i = 0; i < cutoff; ++i)
